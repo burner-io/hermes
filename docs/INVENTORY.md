@@ -90,7 +90,7 @@ The Kanban event WebSocket is implemented in V0.3 with native ticket/token auth 
 
 ## Explicit non-contracts
 
-The following are intentionally **not** introduced into `@tbachir/hermes` unless Hermes itself introduces them as native concepts:
+The following are intentionally **not** introduced into `@burner-io/hermes` unless Hermes itself introduces them as native concepts:
 
 - application project bindings
 - references/catalog resources

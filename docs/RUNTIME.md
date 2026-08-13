@@ -7,7 +7,7 @@ Hermes server / dashboard / native plugins
                 │
                 │ exact native HTTP + WebSocket wire vocabulary
                 ▼
-        @tbachir/hermes/runtime
+        @burner-io/hermes/runtime
                 │
                 ├── authenticated HTTP
                 ├── native profile scoping
@@ -111,4 +111,4 @@ It owns:
 
 The final Run object is never normalized into an SDK-specific result type. Additive Hermes fields remain visible to callers.
 
-This separation is what allows an external package such as `@tbachir/workflow` to delegate one node to a native Hermes Run without teaching Hermes about workflow concepts.
+This separation is what allows an external package such as `@burner-io/workflow` to delegate one node to a native Hermes Run without teaching Hermes about workflow concepts.

@@ -1,4 +1,4 @@
-# @tbachir/hermes
+# @burner-io/hermes
 
 Hermes-native TypeScript SDK modeled from Hermes itself.
 
@@ -23,7 +23,7 @@ Application-owned concepts must adapt to this package, never the reverse.
 ## Install
 
 ```bash
-npm install @tbachir/hermes
+npm install @burner-io/hermes
 ```
 
 The core SDK has no runtime dependency. Optional subpaths declare optional peers: `@tanstack/react-query >=5.90 <6` and `ai >=6 <7`. The core targets Node.js 20+ and browser runtimes with `fetch`, `FormData`, `Blob`, and optionally `WebSocket`.
@@ -31,7 +31,7 @@ The core SDK has no runtime dependency. Optional subpaths declare optional peers
 ## Create a client
 
 ```ts
-import { createHermesClient } from "@tbachir/hermes";
+import { createHermesClient } from "@burner-io/hermes";
 
 const hermes = await createHermesClient({
   baseUrl: "http://127.0.0.1:9119",
@@ -132,7 +132,7 @@ V0.5 exposes Hermes' native execution seams without folding them into the dashbo
 The API Server is a separate Hermes listener from the dashboard. It uses native bearer authentication and, when configured, Hermes' multiplexed `/p/<profile>/...` URL prefix.
 
 ```ts
-import { createApiServerApi } from "@tbachir/hermes";
+import { createApiServerApi } from "@burner-io/hermes";
 
 const apiServer = createApiServerApi({
   baseUrl: "http://127.0.0.1:8642",
@@ -203,7 +203,7 @@ See `docs/PROGRAMMATIC.md`.
 ## React Query integration
 
 ```ts
-import { createHermesReactQuery } from "@tbachir/hermes/react-query";
+import { createHermesReactQuery } from "@burner-io/hermes/react-query";
 
 const hq = createHermesReactQuery(hermes, {
   scopeKey: "prod:designer",
@@ -219,7 +219,7 @@ The adapter is structurally compatible with TanStack Query v5 and has no React/r
 ## AI SDK integration
 
 ```ts
-import { createHermesAiTools } from "@tbachir/hermes/ai-sdk";
+import { createHermesAiTools } from "@burner-io/hermes/ai-sdk";
 
 const readTools = createHermesAiTools(hermes);
 const workflowTools = createHermesAiTools(hermes, {

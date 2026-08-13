@@ -2,13 +2,13 @@
 
 V0.4 adds two optional integration subpaths. Neither changes Hermes contracts or invents Hermes domain concepts.
 
-## `@tbachir/hermes/react-query`
+## `@burner-io/hermes/react-query`
 
 This adapter has **no runtime import** from React or TanStack Query. It returns structural option objects (`queryKey`, `queryFn`, `mutationKey`, `mutationFn`) that can be passed directly to TanStack Query v5 APIs.
 
 ```ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createHermesReactQuery } from "@tbachir/hermes/react-query";
+import { createHermesReactQuery } from "@burner-io/hermes/react-query";
 
 const queryClient = useQueryClient();
 const hq = createHermesReactQuery(hermes, {
@@ -27,12 +27,12 @@ const createTask = useMutation(hq.mutationOptions.kanban!.createTask());
 
 If a `queryClient` is supplied, mutation definitions invalidate only the relevant Hermes query-key roots. The adapter does not install global TanStack Query key registrations or hooks.
 
-## `@tbachir/hermes/ai-sdk`
+## `@burner-io/hermes/ai-sdk`
 
 This subpath uses the Vercel AI SDK `tool()` + `jsonSchema()` APIs and has `ai >=6 <7` as an optional peer dependency.
 
 ```ts
-import { createHermesAiTools } from "@tbachir/hermes/ai-sdk";
+import { createHermesAiTools } from "@burner-io/hermes/ai-sdk";
 
 const tools = createHermesAiTools(hermes); // read-only by default
 ```

@@ -1,5 +1,5 @@
 {
-  "name": "@tbachir/hermes",
+  "name": "@burner-io/hermes",
   "version": "0.5.0",
   "private": false,
   "description": "Hermes-native TypeScript SDK with faithful management contracts, programmatic execution protocols, transport, React Query-compatible factories, and optional Vercel AI SDK tools.",
@@ -9,12 +9,12 @@
   "author": "Tarek Bachir",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tbachir/hermes.git"
+    "url": "git+https://github.com/burner-io/hermes.git"
   },
   "bugs": {
-    "url": "https://github.com/tbachir/hermes/issues"
+    "url": "https://github.com/burner-io/hermes/issues"
   },
-  "homepage": "https://github.com/tbachir/hermes#readme",
+  "homepage": "https://github.com/burner-io/hermes#readme",
   "keywords": [
     "hermes",
     "sdk",

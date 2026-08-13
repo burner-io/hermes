@@ -61,7 +61,7 @@ The native Run lifecycle is the preferred seam when another system needs to dele
 external workflow node
        │
        ▼
-@tbachir/hermes API Server client
+@burner-io/hermes API Server client
        │
 POST /v1/runs
 GET  /v1/runs/:id/events
@@ -71,7 +71,7 @@ GET  /v1/runs/:id
 Hermes owns reasoning/tools/execution inside the Run
 ```
 
-The Hermes SDK deliberately does not define the external workflow node, graph or orchestration semantics. Those belong to the application or a separate package such as `@tbachir/workflow`.
+The Hermes SDK deliberately does not define the external workflow node, graph or orchestration semantics. Those belong to the application or a separate package such as `@burner-io/workflow`.
 
 ## Why the transports are not merged
 
