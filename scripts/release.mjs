@@ -6,13 +6,15 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
+const isWindows = process.platform === "win32";
+
 function run(cmd, args, opts = {}) {
   console.log(`\n$ ${cmd} ${args.join(" ")}`);
-  execFileSync(cmd, args, { stdio: "inherit", ...opts });
+  execFileSync(cmd, args, { stdio: "inherit", shell: isWindows, ...opts });
 }
 
 function capture(cmd, args) {
-  return execFileSync(cmd, args, { encoding: "utf8" }).trim();
+  return execFileSync(cmd, args, { encoding: "utf8", shell: isWindows }).trim();
 }
 
 const dryRun = process.argv.includes("--dry-run");
