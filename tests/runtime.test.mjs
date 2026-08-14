@@ -4,6 +4,8 @@ import {
   HermesHttpError,
   createHermesClient,
   createHermesClientUnchecked,
+  createHermesConnection,
+  createHermesConnectionUnchecked,
 } from '../dist/index.js';
 
 function json(value, init = {}) {
@@ -444,4 +446,76 @@ test('TUI Gateway client speaks native JSON-RPC and emits Hermes events', async 
   assert.equal(new URL(socket.url).pathname, '/api/ws');
   assert.equal(new URL(socket.url).searchParams.get('token'), 'ws-token');
   gateway.close();
+});
+
+
+test('one-origin connection uses the same bearer key for control and API Server facades', async () => {
+  const mock = mockFetch(({ url }) => {
+    const path = new URL(url).pathname;
+    if (path === '/api/status') return json({ version: 'test' });
+    if (path === '/v1/capabilities') return json({ object: 'hermes.api_server.capabilities', features: { run_submission: true } });
+    return json({ ok: true });
+  });
+
+  const hermes = createHermesConnectionUnchecked({
+    baseUrl: 'http://hermes.test/base/',
+    apiKey: 'one-machine-key',
+    fetch: mock.fetch,
+  });
+
+  await hermes.control.system.status();
+  await hermes.capabilities();
+
+  assert.equal(hermes.baseUrl, 'http://hermes.test/base');
+  assert.equal(hermes.apiServer, hermes.control.apiServer);
+  assert.equal(hermes.runs, hermes.apiServer.runs);
+
+  for (const call of mock.calls) {
+    const headers = new Headers(call.init.headers);
+    assert.equal(headers.get('Authorization'), 'Bearer one-machine-key');
+    assert.equal(headers.has('X-Hermes-Session-Token'), false);
+  }
+  assert.equal(new URL(mock.calls[0].url).pathname, '/base/api/status');
+  assert.equal(new URL(mock.calls[1].url).pathname, '/base/v1/capabilities');
+});
+
+test('one-origin connection preserves native profile scoping per facade', async () => {
+  const mock = mockFetch(() => json({}));
+  const hermes = createHermesConnectionUnchecked({
+    baseUrl: 'http://hermes.test',
+    apiKey: 'one-machine-key',
+    profile: 'reviewer',
+    fetch: mock.fetch,
+  });
+
+  await hermes.control.config.get();
+  await hermes.apiServer.raw('GET', '/api/sessions');
+
+  const controlUrl = new URL(mock.calls[0].url);
+  const apiUrl = new URL(mock.calls[1].url);
+  assert.equal(controlUrl.pathname, '/api/config');
+  assert.equal(controlUrl.searchParams.get('profile'), 'reviewer');
+  assert.equal(apiUrl.pathname, '/p/reviewer/api/sessions');
+});
+
+test('async one-origin connection keeps optional surface probing on the same bearer-authenticated origin', async () => {
+  const mock = mockFetch(({ url }) => {
+    const path = new URL(url).pathname;
+    if (path === '/api/plugins/kanban/board') {
+      return json({ columns: [], tenants: [], assignees: [], latest_event_id: 0, now: 0 });
+    }
+    return json({ ok: true });
+  });
+
+  const hermes = await createHermesConnection({
+    baseUrl: 'http://hermes.test',
+    apiKey: 'one-machine-key',
+    fetch: mock.fetch,
+  });
+
+  assert.ok(hermes.control.kanban);
+  const probe = mock.calls.find((call) => new URL(call.url).pathname === '/api/plugins/kanban/board');
+  assert.ok(probe);
+  const headers = new Headers(probe.init.headers);
+  assert.equal(headers.get('Authorization'), 'Bearer one-machine-key');
 });

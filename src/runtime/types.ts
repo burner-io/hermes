@@ -62,7 +62,7 @@ export interface HermesClientOptions {
   surfaceCacheMs?: number;
   /** Probe optional plugin surfaces during createHermesClient(). Defaults true. */
   probeOnCreate?: boolean;
-  /** Optional native Hermes API Server connection (separate listener from dashboard). */
+  /** Optional native Hermes API Server facade. It may share the same origin as control routes. */
   apiServer?: HermesApiServerClientOptions;
 }
 
@@ -184,13 +184,49 @@ export interface HermesApiServerApi {
   }): Promise<T>;
 }
 
+
+
+/**
+ * Preferred private machine-connection options. One base URL and one
+ * API_SERVER_KEY-derived Bearer credential back both typed facades.
+ */
+export interface HermesConnectionOptions {
+  baseUrl: string;
+  apiKey: HermesTokenResolver;
+  /** Default native profile. Control methods use Hermes-native profile scoping; API Server calls use `/p/<profile>/...`. */
+  profile?: string;
+  fetch?: typeof fetch;
+  headers?: HeadersInit;
+  timeoutMs?: number;
+  websocketFactory?: HermesWebSocketFactory;
+  websocketAuth?: "auto" | "ticket" | "none";
+  internalWebSocketToken?: string;
+  surfaceCacheMs?: number;
+  /** Probe optional plugin surfaces when creating the control facade. Defaults true. */
+  probeOnCreate?: boolean;
+}
+
+export interface HermesConnection {
+  /** Normalized shared private Hermes origin. */
+  readonly baseUrl: string;
+  /** Typed `/api/*` and plugin/control namespaces over the shared origin. */
+  readonly control: HermesRuntimeClient;
+  /** Typed API Server facade (`/v1/*`, API-server `/api/*`, health, SSE). */
+  readonly apiServer: HermesApiServerApi;
+  /** Convenience alias for `apiServer.runs`. */
+  readonly runs: HermesApiServerApi["runs"];
+  capabilities(): ReturnType<HermesApiServerApi["capabilities"]>;
+  models(): ReturnType<HermesApiServerApi["models"]>;
+  health(detailed?: boolean): ReturnType<HermesApiServerApi["health"]>;
+}
+
 export interface HermesRuntimeClient extends Omit<HermesClient, "kanban" | "projects"> {
   /** Native Kanban dashboard plugin, present only when its route is reachable. */
   kanban?: HermesRuntimeKanbanApi;
   websocket: HermesWebSocketApi;
   /** Native TUI Gateway JSON-RPC protocol over /api/ws. */
   tuiGateway: HermesTuiGatewayApi;
-  /** Native Hermes API Server HTTP/SSE protocol, only when configured. */
+  /** Native Hermes API Server HTTP/SSE facade, only when configured. */
   apiServer?: HermesApiServerApi;
   /** Escape hatch returning the authenticated raw HTTP Response. */
   response(

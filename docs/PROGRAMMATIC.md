@@ -1,67 +1,86 @@
-# Programmatic Hermes protocols — SDK 0.5
+# Programmatic Hermes protocols — SDK 0.6
 
-Hermes exposes more than one network/programmatic surface. The SDK keeps them separate because they have different lifecycles, authentication and semantics.
+The SDK keeps Hermes-native wire semantics explicit while allowing a trusted application to configure **one private Hermes origin and one machine key**.
 
-## 1. Dashboard management HTTP/WebSocket
+## 1. Recommended private connection
 
-`createHermesClient()` continues to target the dashboard/control-plane server for Profiles, Skills, Sessions, tools, MCP, Kanban, config, filesystem, etc.
+```ts
+const hermes = await createHermesConnection({
+  baseUrl: process.env.HERMES_URL!,
+  apiKey: process.env.HERMES_API_KEY!,
+});
+```
 
-This transport uses Hermes dashboard auth (`X-Hermes-Session-Token`, cookie-gated auth, or native WS tickets depending on deployment).
+This produces:
 
-## 2. TUI Gateway JSON-RPC
+- `hermes.control` — typed Hermes control/plugin namespaces;
+- `hermes.apiServer` — typed API Server surface;
+- `hermes.runs` — convenience alias for native Runs;
+- `hermes.capabilities()`, `models()`, `health()` — API Server conveniences.
 
-`HermesRuntimeClient.tuiGateway` targets the native `/api/ws` WebSocket exposed with the dashboard gateway.
+Both facades receive the same URL/key. The helper maps `apiKey` to Bearer auth for the control HTTP transport and to native API Server Bearer auth for API Server calls.
 
-The SDK sends standard Hermes JSON-RPC request envelopes and exposes native method/event names. Convenience methods are thin aliases over native operations:
+This helper is for deployments where the trusted/private Hermes origin or ingress accepts that same machine credential on the route families the application uses. It does not remove lower-level native auth options from the SDK.
 
-- `createSession()` → `session.create`
-- `submitPrompt()` → `prompt.submit`
-- `interrupt()` → native interrupt request
+## 2. Control HTTP/WebSocket
 
-`connection.request()` and `connection.on()` are retained for methods/events added by Hermes that the convenience layer has not yet named.
+`createHermesClient()` remains the low-level control-plane client for Profiles, Skills, Sessions, tools, MCP, Kanban, config, filesystem, etc.
 
-This is the appropriate seam for interactive session clients that need live message/tool/approval events.
+It can use native session-token/cookie/ticket mechanisms or an explicit Bearer seam. `createHermesConnection()` chooses Bearer because its contract is machine-to-machine private access.
 
-## 3. API Server HTTP/SSE
+Profile scoping remains endpoint-native; the SDK does not globally append `profile` to every request.
 
-`createApiServerApi()` targets Hermes' separate API Server listener.
+## 3. TUI Gateway JSON-RPC
+
+`HermesRuntimeClient.tuiGateway` targets native `/api/ws`.
+
+Convenience methods remain thin aliases over Hermes-native operations:
+
+- `createSession()` -> `session.create`
+- `submitPrompt()` -> `prompt.submit`
+- `interrupt()` -> native interrupt request
+
+`request()` and `on()` remain open for Hermes methods/events not yet wrapped.
+
+## 4. API Server HTTP/SSE
+
+`createApiServerApi()` remains available independently:
 
 ```ts
 const api = createApiServerApi({
-  baseUrl: "http://127.0.0.1:8642",
-  apiKey: process.env.API_SERVER_KEY,
+  baseUrl: process.env.HERMES_URL!,
+  apiKey: process.env.HERMES_API_KEY!,
   profile: "architect",
 });
 ```
 
-Native profile multiplexing is implemented as `/p/<profile>/...`, not as the dashboard's management `?profile=` convention.
+Authentication is `Authorization: Bearer <API_SERVER_KEY>`.
 
-Authentication uses the native API Server bearer key.
+Native profile multiplexing uses `/p/<profile>/...`.
 
-Typed V0.5 surfaces:
+Typed surfaces include:
 
 - `capabilities()`
 - `models()`
 - `health()` / detailed health
 - `runs.create()`
 - `runs.get()`
-- `runs.events()` (SSE)
+- `runs.events()`
 - `runs.approve()`
 - `runs.stop()`
-- `runs.wait()` client convenience
-- `raw()` escape hatch
+- `runs.wait()` convenience
+- `raw()`
 
-The Runs methods preserve snake_case request fields and additive response fields from Hermes.
+The Runs methods preserve native request fields and additive Hermes response fields.
 
 ## Runs and external workflow runtimes
 
-The native Run lifecycle is the preferred seam when another system needs to delegate a durable unit of work to Hermes:
-
 ```text
-external workflow node
+application workflow node
        │
        ▼
-@burner-io/hermes API Server client
+@burner-io/hermes
+HermesConnection.runs
        │
 POST /v1/runs
 GET  /v1/runs/:id/events
@@ -71,15 +90,17 @@ GET  /v1/runs/:id
 Hermes owns reasoning/tools/execution inside the Run
 ```
 
-The Hermes SDK deliberately does not define the external workflow node, graph or orchestration semantics. Those belong to the application or a separate package such as `@burner-io/workflow`.
+The SDK deliberately does not define the application workflow node, graph, project, story, spec or orchestration semantics. Those belong to the application or another package such as `@burner-io/workflow`.
 
-## Why the transports are not merged
+## Why the facades remain explicit
 
-A global `hermes.runPrompt()` abstraction would hide important native differences:
+One application URL/key does **not** imply one flattened Hermes namespace.
 
-- dashboard management profile scoping vs API Server URL-profile multiplexing;
-- dashboard session auth vs API Server bearer auth;
-- interactive JSON-RPC session lifecycle vs durable HTTP/SSE Run lifecycle;
-- different event/protocol envelopes.
+Important native distinctions remain visible:
 
-Keeping these explicit makes the SDK a faithful facade rather than a second Hermes domain model.
+- control endpoint profile scoping vs API Server `/p/<profile>/...` multiplexing;
+- interactive JSON-RPC lifecycle vs durable HTTP/SSE Run lifecycle;
+- control-domain payloads vs API Server payloads;
+- WebSocket auth mechanics when an interactive transport is used.
+
+`HermesConnection` unifies deployment configuration, not Hermes' domain/protocol vocabulary.

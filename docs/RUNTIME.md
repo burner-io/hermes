@@ -1,9 +1,9 @@
-# Runtime architecture — V0.3
+# Runtime architecture — V0.6
 
 ## Boundary
 
 ```text
-Hermes server / dashboard / native plugins
+Hermes private origin / native route families / plugins
                 │
                 │ exact native HTTP + WebSocket wire vocabulary
                 ▼
@@ -84,9 +84,9 @@ Multipart helpers create `FormData` and never set `Content-Type`; the runtime/fe
 
 Raw downloads return the native `Response`, allowing the caller to stream, save, inspect headers, or consume a `Blob` without forced buffering.
 
-## V0.5: programmatic execution transports
+## Programmatic execution transports
 
-The runtime now exposes two additional Hermes-native seams alongside the V0.3 dashboard transport.
+The runtime exposes the control transport plus Hermes-native TUI Gateway and API Server facades. V0.6 can configure control + API Server from one private origin/key without flattening their native semantics.
 
 ### TUI Gateway JSON-RPC
 
@@ -96,11 +96,11 @@ It preserves JSON-RPC method names and native event envelopes. Convenience metho
 
 ### API Server HTTP/SSE
 
-`createApiServerApi()` is deliberately configured independently from the dashboard client because Hermes' API Server is a separate listener/protocol.
+`createApiServerApi()` remains a distinct typed facade because API Server routing/profile semantics differ from control namespaces. It does **not** require the consuming application to configure a second origin.
 
 It owns:
 
-- API Server `baseUrl`;
+- API Server URL construction from its configured `baseUrl`;
 - native `Authorization: Bearer <API_SERVER_KEY>`;
 - native multiplex profile prefix `/p/<profile>/...`;
 - JSON request/response handling;
@@ -109,6 +109,6 @@ It owns:
 - abort/timeout handling;
 - `runs.wait()` as a client convenience over repeated native `get()` calls.
 
-The final Run object is never normalized into an SDK-specific result type. Additive Hermes fields remain visible to callers.
+`createHermesConnection()` configures both the control transport and this API Server facade from the same `baseUrl` + `apiKey`, while preserving their native request semantics.
 
-This separation is what allows an external package such as `@burner-io/workflow` to delegate one node to a native Hermes Run without teaching Hermes about workflow concepts.
+The final Run object is never normalized into an SDK-specific result type. Additive Hermes fields remain visible to callers. This allows `@burner-io/workflow` to delegate one node to a native Hermes Run without teaching Hermes about workflow concepts.

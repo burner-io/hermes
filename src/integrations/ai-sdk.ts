@@ -256,7 +256,7 @@ export function createHermesAiTools(
       }, ["title"])),
       execute: async (input) => {
         const { board, ...taskInput } = input;
-        return client.kanban!.createTask(taskInput, boardFrom(board ? { board } : {}, options.board));
+        return client.kanban!.createTask(taskInput, boardFrom(board === undefined ? {} : { board }, options.board));
       },
     });
 
@@ -282,7 +282,7 @@ export function createHermesAiTools(
       }, ["task_id"])),
       execute: async (input) => {
         const { task_id, board, ...patch } = input;
-        return client.kanban!.updateTask(task_id, patch, boardFrom(board ? { board } : {}, options.board));
+        return client.kanban!.updateTask(task_id, patch, boardFrom(board === undefined ? {} : { board }, options.board));
       },
     });
 

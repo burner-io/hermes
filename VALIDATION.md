@@ -1,63 +1,58 @@
-# Validation — 0.5.0
+# Validation — 0.6.0
 
 ## Contract boundary
 
 - No application-owned workflow/reference/spec/story/context-pack abstractions are present in `src/contracts` or `src/runtime`.
 - Optional adapters live under `src/integrations`; they may define integration metadata such as query keys and AI tool names, but never redefine Hermes domain entities.
-- Programmatic execution support lives in `src/contracts/programmatic.ts` and `src/runtime/{api-server,gateway-rpc}.ts` and preserves Hermes protocol vocabulary.
+- Programmatic execution support preserves Hermes protocol vocabulary.
 - Native Hermes field names and payloads are preserved.
-- Profile scoping is not globally normalized; it follows the reviewed Hermes endpoint families.
+- Profile scoping is not globally normalized; it follows the relevant Hermes endpoint family.
 - Kanban remains an optional native plugin surface.
-- Native Project value types remain exported, but no core `HermesProjectsApi`/`client.projects` is claimed because the reviewed core dashboard API does not expose `/api/projects`.
+- Native Project value types remain exported, but no untraced core `client.projects` management API is invented.
+
+## V0.6 one-origin invariant
+
+`createHermesConnection({ baseUrl, apiKey })` is the preferred machine-to-machine helper.
+
+It must satisfy:
+
+1. control calls use the supplied `apiKey` as `Authorization: Bearer`;
+2. API Server calls use the same supplied `apiKey` as `Authorization: Bearer`;
+3. neither facade injects `X-Hermes-Session-Token` through this helper;
+4. both facades share the same normalized origin;
+5. native profile scoping remains different where Hermes defines it differently;
+6. optional plugin probing uses the same origin/key;
+7. low-level session-token/cookie/Ticket options remain available only through the lower-level control client.
 
 ## TypeScript/build
 
-```bash
-npm run typecheck
-npm run build
-```
+The core contracts/runtime compile under:
 
-Both pass under `strict`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, and NodeNext ESM.
+- `strict`
+- `exactOptionalPropertyTypes`
+- `noUncheckedIndexedAccess`
+- NodeNext ESM
 
-## Runtime + integration tests
+The build environment could not resolve/install the public `ai` peer package. For validation only, a minimal local `ai` type/runtime fixture matching the two seams used by this package (`jsonSchema()` and `tool()`) was provided outside the packaged files. With that fixture, the full package passed `npm run check` under the package's strict TypeScript settings.
 
-```bash
-npm test
-```
+## Runtime tests
 
-Current suite: **27/27 passing**.
+Full deterministic suite after the V0.6 change: **30/30 passing** (22 runtime/programmatic tests + 8 integration-adapter tests).
 
-V0.3 transport coverage remains intact, including auth/scoping, HTTP errors, surface discovery, WebSocket token/ticket auth, Kanban event framing, native `/links`, `?since=`, multipart upload, and provider scoping.
+New V0.6 coverage:
 
-V0.4 integration coverage remains intact:
+- same Bearer key on control `/api/*` and API Server `/v1/*` requests;
+- same base origin on both facades;
+- no session-token header in the one-origin helper;
+- control `?profile=` behavior vs API Server `/p/<profile>/...` behavior;
+- optional Kanban surface probing under the same Bearer-authenticated origin.
 
-1. stable scoped React Query-compatible query definitions,
-2. relevant-domain mutation invalidation,
-3. React Query-compatible Kanban mutation routing,
-4. AI SDK tools are read-only by default,
-5. `workflow` mode explicitly adds Kanban mutations/dispatch,
-6. AI tool execution delegates directly to Hermes and preserves additive response fields,
-7. Kanban AI mutation preserves native task payload and board query semantics,
-8. requested Kanban AI tools are omitted when the plugin is absent.
+Existing V0.3–V0.5 runtime coverage remains intact, including HTTP errors, surface discovery, WebSocket token/ticket auth, Kanban event framing, native `/links`, `?since=`, multipart upload, provider scoping, API Server Runs polling/SSE, and TUI Gateway JSON-RPC fixtures.
 
-V0.5 additionally covers:
+The React Query / AI SDK adapters remain behaviorally unchanged by the connection helper; V0.6 only includes a small exact-optional typing fix in the Kanban AI adapter discovered by the strict validation run.
 
-9. API Server `Authorization: Bearer` and native `/p/<profile>/...` multiplex prefix,
-10. native Runs create payload and terminal-state polling without result normalization,
-11. native Run SSE event framing/parsing,
-12. TUI Gateway `/api/ws` JSON-RPC request/response and Hermes event envelopes.
+## Live-server limitation
 
-## Integration API verification
+No live Hermes server was available inside this build environment. The suite validates request construction, response/error handling, auth/scoping, multipart behavior, reachability logic, WebSocket framing and Runs behavior against deterministic fixtures.
 
-The integration design was checked against current official documentation:
-
-- Vercel AI SDK 6 `tool()` / `inputSchema` / `execute` and JSON Schema support.
-- TanStack Query v5 object-form query/mutation APIs, `queryOptions`, `mutationOptions`, query keys and invalidation.
-
-The build environment could not resolve the public npm registry, so it could not install the real peer packages for a package-manager integration test. The AI adapter compile/runtime fixture mirrors only the documented `tool()` and `jsonSchema()` seam used by this package. The emitted `.d.ts` references the real `ai` peer type (`ToolSet`), and the React Query adapter intentionally has no runtime import from TanStack Query.
-
-## Current Hermes limitation
-
-No live Hermes server was available inside this build environment. The suite therefore validates request construction, response/error handling, auth/scoping, multipart behavior, reachability logic, WebSocket framing, query/mutation adapters, and AI tool delegation against deterministic fixtures rather than performing a live end-to-end handshake.
-
-The package keeps dashboard `raw.request()` / `response()` and API Server `raw()` escape hatches so newly added/version-specific Hermes paths remain usable without inventing a domain abstraction.
+The SDK retains control `raw.request()` / `response()` and API Server `raw()` escape hatches so version-specific Hermes paths remain usable without inventing a new domain abstraction.

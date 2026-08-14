@@ -80,4 +80,4 @@ Reviewed on 2026-08-13 from current `NousResearch/hermes-agent` sources/document
 | TUI Gateway session lifecycle | `tui_gateway/methods_session.py` |
 | API Server Runs HTTP/SSE implementation | current API Server routers/source referenced by the official integration guide |
 
-V0.5 keeps dashboard management transport, TUI Gateway JSON-RPC and API Server HTTP/SSE as three explicit seams rather than collapsing them into one invented execution abstraction.
+V0.6 keeps control HTTP/WebSocket, TUI Gateway JSON-RPC and API Server HTTP/SSE as explicit typed seams, while `createHermesConnection()` lets trusted same-origin deployments feed control + API Server from one `baseUrl` and one Bearer `apiKey`.
